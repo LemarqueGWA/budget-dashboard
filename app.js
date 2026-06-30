@@ -9,20 +9,40 @@ var pct1 = function (n) { return (Math.round(n * 10) / 10) + "%"; };
 
 function show(el, on) { el.hidden = !on; }
 
-async function load(pw) {
-  var url = WEB_APP_URL + "?pw=" + encodeURIComponent(pw);
-  var res = await fetch(url);
-  var data = await res.json();
-  if (data.error) throw new Error(data.error);
-  // revive dates
-  var txns = data.transactions.map(function (t) {
-    return { date: new Date(t.date), amount: t.amount, direction: t.direction,
-      merchant: t.merchant, group: t.group, lineItem: t.lineItem, status: t.status };
+// JSONP loader. A cross-origin fetch/XHR cannot follow Apps Script's one-time
+// redirect to googleusercontent (it 404s with Origin: null), so we request the
+// data via a <script> tag with a callback param instead — immune to CORS.
+function load(pw) {
+  return new Promise(function (resolve, reject) {
+    var cbName = "__btCb_" + new Date().getTime();
+    var script = document.createElement("script");
+    function cleanup() {
+      try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+      if (script.parentNode) script.parentNode.removeChild(script);
+      clearTimeout(timer);
+    }
+    var timer = setTimeout(function () {
+      cleanup(); reject(new Error("timeout contacting server"));
+    }, 20000);
+    window[cbName] = function (data) {
+      cleanup();
+      try {
+        if (data && data.error) { reject(new Error(data.error)); return; }
+        var txns = data.transactions.map(function (t) {
+          return { date: new Date(t.date), amount: t.amount, direction: t.direction,
+            merchant: t.merchant, group: t.group, lineItem: t.lineItem, status: t.status };
+        });
+        var model = buildDashboardModel(txns, data.budgets, {
+          cycleStartDay: data.settings.cycleStartDay, asOf: new Date()
+        });
+        render(model, txns);
+        resolve();
+      } catch (err) { reject(err); }
+    };
+    script.onerror = function () { cleanup(); reject(new Error("network/script load failed")); };
+    script.src = WEB_APP_URL + "?pw=" + encodeURIComponent(pw) + "&callback=" + cbName;
+    document.body.appendChild(script);
   });
-  var model = buildDashboardModel(txns, data.budgets, {
-    cycleStartDay: data.settings.cycleStartDay, asOf: new Date()
-  });
-  render(model, txns);
 }
 
 function render(m, txns) {
