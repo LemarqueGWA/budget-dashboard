@@ -102,8 +102,9 @@ function unlock(pw) {
     show(document.getElementById("gate"), false);
     show(document.getElementById("app"), true);
   }).catch(function (err) {
+    console.error("budget load failed:", err);
     document.getElementById("gate-err").textContent =
-      err.message === "unauthorised" ? "Wrong password." : "Could not load data.";
+      err.message === "unauthorised" ? "Wrong password." : ("Load error: " + (err && err.message ? err.message : err));
     sessionStorage.removeItem("bt_pw");
   });
 }
