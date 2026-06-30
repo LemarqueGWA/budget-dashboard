@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Budget Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="gate" class="gate">
+    <div class="gate-box">
+      <h1>Budget Tracker</h1>
+      <input id="pw" type="password" placeholder="Password" autocomplete="current-password">
+      <button id="enter">Unlock</button>
+      <p id="gate-err" class="err"></p>
+    </div>
+  </div>
+
+  <main id="app" hidden>
+    <header class="topbar">
+      <h1>Budget Tracker</h1>
+      <div class="cycle" id="cycle-label"></div>
+      <button id="refresh">Refresh</button>
+    </header>
+
+    <section class="kpis" id="kpis"></section>
+
+    <section class="columns">
+      <div class="col-left">
+        <div class="card"><h2>Spend by category</h2><div id="by-category"></div></div>
+        <div class="card"><h2>Budget vs actual</h2><div id="budget-actual"></div></div>
+        <div class="card"><h2>Outcome</h2><div id="outcome"></div></div>
+      </div>
+      <div class="col-right">
+        <div class="card"><h2>Recent transactions</h2><div id="transactions"></div></div>
+        <div class="card"><h2>Top merchants</h2><div id="top-merchants"></div></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- load order matters: period before aggregate before app -->
+  <script src="period.js"></script>
+  <script src="aggregate.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
